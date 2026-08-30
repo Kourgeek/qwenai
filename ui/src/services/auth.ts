@@ -39,7 +39,7 @@ function getUser(): User | null {
   }
 }
 
-function saveUser(user: User): void {
+export function saveUser(user: User): void {
   try {
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
   } catch (e) {
@@ -47,7 +47,7 @@ function saveUser(user: User): void {
   }
 }
 
-function clearUser(): void {
+export function clearUser(): void {
   try {
     localStorage.removeItem(STORAGE_KEYS.USER);
   } catch (e) {

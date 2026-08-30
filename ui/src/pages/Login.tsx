@@ -11,15 +11,9 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
-  // Redirect if already logged in
-  if (isAuthenticated) {
-    const redirect = searchParams.get('redirect') || '/';
-    window.location.href = redirect;
-  }
 
   const validate = useCallback(() => {
     const newErrors: Record<string, string> = {};
@@ -46,7 +40,7 @@ export default function Login() {
       await login(email, password);
       const redirect = searchParams.get('redirect') || '/';
       toast.success('Welcome back!');
-      navigate(redirect);
+      setTimeout(() => navigate(redirect), 100);
     } catch (error: unknown) {
       const err = error as { message?: string };
       toast.error('Login failed', err.message || 'Invalid email or password');

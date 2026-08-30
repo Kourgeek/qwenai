@@ -7,7 +7,6 @@ import {
   X,
   Sun,
   Moon,
-  Search,
   ChevronDown,
   LogOut,
 } from 'lucide-react';

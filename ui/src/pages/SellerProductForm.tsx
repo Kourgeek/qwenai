@@ -39,7 +39,7 @@ interface FormData {
   is_active: boolean;
 }
 
-export function SellerProductForm({ productId, mode }: SellerProductFormProps) {
+export default function SellerProductForm({ productId, mode }: SellerProductFormProps) {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);

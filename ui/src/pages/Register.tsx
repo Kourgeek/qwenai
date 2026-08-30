@@ -53,7 +53,7 @@ export default function Register() {
     try {
       await registerUser(email, password, firstName, lastName);
       toast.success('Account created successfully!');
-      navigate('/');
+      setTimeout(() => navigate('/'), 100);
     } catch (error: unknown) {
       const err = error as { message?: string };
       toast.error('Registration failed', err.message || 'Could not create account');

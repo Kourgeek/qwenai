@@ -15,7 +15,7 @@ import {
 import ProductCard from '../components/ProductCard';
 import SearchBar from '../components/SearchBar';
 import { getFeaturedProducts, getCategories } from '../services/products';
-import type { Product, Category } from '../types';
+import type { Product } from '../types';
 
 const CATEGORIES = [
   { id: 'electronics', name: 'Electronics', icon: '💻', color: 'from-blue-500 to-blue-600' },
@@ -38,17 +38,15 @@ const FEATURES = [
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [featured, cats] = await Promise.all([
+        const [featured] = await Promise.all([
           getFeaturedProducts(8),
           getCategories(),
         ]);
         setFeaturedProducts(featured);
-        setCategories(cats);
       } catch (error) {
         console.error('Failed to load home data:', error);
       } finally {
