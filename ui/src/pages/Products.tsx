@@ -95,18 +95,18 @@ export default function Products() {
     return () => clearTimeout(timeout);
   }, [currentPage, sortBy, searchQuery, selectedCategory, selectedBrand, priceRange.min, priceRange.max]);
 
-  // Update URL params
-  const updateFilters = useCallback((updates: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams);
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-    });
-    setSearchParams(params);
-  }, [searchParams, setSearchParams]);
+  // Update URL params - kept for future use
+  // const updateFilters = useCallback((updates: Record<string, string>) => {
+  //   const params = new URLSearchParams(searchParams);
+  //   Object.entries(updates).forEach(([key, value]) => {
+  //     if (value) {
+  //       params.set(key, value);
+  //     } else {
+  //       params.delete(key);
+  //     }
+  //   });
+  //   setSearchParams(params);
+  // }, [searchParams, setSearchParams]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);

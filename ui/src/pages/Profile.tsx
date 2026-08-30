@@ -10,12 +10,9 @@ import {
   Shield,
   Bell,
   CreditCard,
-  LogOut // unused
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from '../components/Toast';
-import ProductCard from '../components/ProductCard';
-import type { Product } from '../types';
 
 type Tab = 'profile' | 'orders' | 'wishlist' | 'addresses' | 'settings';
 

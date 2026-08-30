@@ -7,7 +7,7 @@ import {
   useMemo,
   type ReactNode,
 } from 'react';
-import type { CartItem, Cart, Product } from '../types';
+import type { CartItem, Product } from '../types';
 
 interface CartContextType {
   items: CartItem[];

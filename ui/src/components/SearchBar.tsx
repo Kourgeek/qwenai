@@ -69,11 +69,6 @@ export default function SearchBar({ onSearch, categories, compact = false }: Sea
     } catch {}
   }, [recentSearches]);
 
-  const allCategories = [
-    { id: 'all', name: 'All' },
-    ...(categories || []).map((c) => ({ id: c.slug || c.id, name: c.name })),
-  ];
-
   return (
     <div ref={containerRef} className="relative w-full">
       <form onSubmit={handleSearch} className="relative">

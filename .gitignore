@@ -1,62 +1,78 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-ENV/
-*.egg-info/
-*.egg
+```
+# Dependencies
+node_modules/
+
+# Build artifacts
 dist/
 build/
-.eggs/
+*.js
+*.ts
+*.tsx
 
-# IDE
+# Environment variables
+.env
+.env.local
+*.env.*
+
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-
-# Docker
-*.pid
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# OS
-.DS_Store
-Thumbs.db
+*.tmp
 
 # Logs
 *.log
-logs/
 
-# Node
-node_modules/
-
-# MyPy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pytest
-.pytest_cache/
-.coverage
+# Coverage reports
+coverage/
 htmlcov/
+.coverage
 
-# Coverage
-coverage.xml
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Generated proto files
-*_pb2.py
-*_pb2_grpc.py
-*.pyi
+# Virtual environments
+venv/
+.venv/
+env/
 
-# Distribution
-*.whl
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Testing
+.nyc_output/
+coverage/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary folders
+temp/
+tmp/
+
+# Local configuration
+config/local.*
+!config/default.*
+
+# Database
+*.db
+*.db-journal
+
+# Package manager
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+.next/
+.nuxt/
+```

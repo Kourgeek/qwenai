@@ -37,7 +37,6 @@ interface Category {
 }
 
 export function ProductForm({ isOpen, onClose, editingProduct, sellerId, onSuccess }: ProductFormProps) {
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
@@ -150,7 +149,7 @@ export function ProductForm({ isOpen, onClose, editingProduct, sellerId, onSucce
         description: form.description || undefined,
         category_id: form.category_id || undefined,
         brand_id: form.brand_id || undefined,
-        compare_at_price: compareAtPrice,
+        compare_at_price: compareAtPrice || undefined,
         sku: form.sku || undefined,
         stock_quantity: stockQuantity,
         image_urls: validImages.length ? validImages : undefined,

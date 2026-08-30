@@ -14,8 +14,8 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (email: string, password: string, firstName: string, lastName: string) => Promise<User>;
   logout: () => void;
   updateUser: (user: User) => void;
 }
@@ -45,8 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { login: loginService } = await import('../services/auth');
       const { user: loggedInUser } = await loginService({ email, password });
+      // Save user to localStorage so getCurrentUser() works after refresh
+      const { saveUser } = await import('../services/auth');
+      saveUser(loggedInUser);
       setUser(loggedInUser);
       return loggedInUser;
+    } catch (error) {
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         first_name: firstName,
         last_name: lastName,
       });
+      // Save user to localStorage so getCurrentUser() works after refresh
+      const { saveUser } = await import('../services/auth');
+      saveUser(registeredUser);
       setUser(registeredUser);
+      return registeredUser;
+    } catch (error) {
+      throw error;
     } finally {
       setIsLoading(false);
     }

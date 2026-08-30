@@ -5,7 +5,7 @@ import CartItemCard from '../components/CartItem';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from '../components/Toast';
-import { clearCart } from '../services/cart';
+import { clearCart as clearCartService } from '../services/cart';
 import type { ShippingAddress } from '../types';
 
 export default function Cart() {
@@ -43,7 +43,7 @@ export default function Cart() {
 
     setProcessing(true);
     try {
-      await clearCart(shipping);
+      await clearCartService();
       await clearCart();
       setShowCheckout(false);
       toast.success('Order placed successfully! 🎉');
