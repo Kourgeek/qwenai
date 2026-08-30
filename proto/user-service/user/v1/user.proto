@@ -1,0 +1,146 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "projects/user-service/proto/gen/user/v1;userv1";
+
+import "google/protobuf/timestamp.proto";
+
+// UserService provides user profile, address, and wishlist management.
+service UserService {
+  // Profile RPCs
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc UpdateUser(UpdateUserRequest) returns (User);
+
+  // Address RPCs
+  rpc AddAddress(AddAddressRequest) returns (Address);
+  rpc UpdateAddress(UpdateAddressRequest) returns (Address);
+  rpc DeleteAddress(DeleteAddressRequest) returns (Empty);
+  rpc GetUserAddresses(GetUserAddressesRequest) returns (AddressList);
+
+  // Wishlist RPCs
+  rpc AddToWishlist(AddToWishlistRequest) returns (WishlistItem);
+  rpc GetUserWishlist(GetUserWishlistRequest) returns (WishlistItemList);
+  rpc RemoveFromWishlist(RemoveFromWishlistRequest) returns (Empty);
+}
+
+// ==================== Common ====================
+
+message Empty {}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+// ==================== User ====================
+
+message User {
+  string id = 1;
+  string email = 2;
+  string phone = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string avatar_url = 6;
+  string role = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// ==================== Profile ====================
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message UpdateUserRequest {
+  string user_id = 1;
+  string email = 2;
+  string phone = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string avatar_url = 6;
+  string role = 7;
+}
+
+// ==================== Address ====================
+
+message Address {
+  string id = 1;
+  string user_id = 2;
+  string type = 3;
+  string full_name = 4;
+  string line1 = 5;
+  string line2 = 6;
+  string city = 7;
+  string postal_code = 8;
+  string country = 9;
+  bool is_default = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+message AddAddressRequest {
+  string user_id = 1;
+  string type = 2;
+  string full_name = 3;
+  string line1 = 4;
+  string line2 = 5;
+  string city = 6;
+  string postal_code = 7;
+  string country = 8;
+  bool is_default = 9;
+}
+
+message UpdateAddressRequest {
+  string user_id = 1;
+  string address_id = 2;
+  string type = 3;
+  string full_name = 4;
+  string line1 = 5;
+  string line2 = 6;
+  string city = 7;
+  string postal_code = 8;
+  string country = 9;
+  bool is_default = 10;
+}
+
+message DeleteAddressRequest {
+  string user_id = 1;
+  string address_id = 2;
+}
+
+message GetUserAddressesRequest {
+  string user_id = 1;
+}
+
+message AddressList {
+  repeated Address addresses = 1;
+}
+
+// ==================== Wishlist ====================
+
+message WishlistItem {
+  string id = 1;
+  string user_id = 2;
+  string product_id = 3;
+  google.protobuf.Timestamp added_at = 4;
+}
+
+message AddToWishlistRequest {
+  string user_id = 1;
+  string product_id = 2;
+}
+
+message GetUserWishlistRequest {
+  string user_id = 1;
+}
+
+message WishlistItemList {
+  repeated WishlistItem items = 1;
+}
+
+message RemoveFromWishlistRequest {
+  string user_id = 1;
+  string product_id = 2;
+}

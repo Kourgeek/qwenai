@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package notification.v1;
+
+option go_package = "projects/notification-service/proto/gen/notification/v1;notificationv1";
+
+// NotificationService provides notification management operations including
+// sending notifications, retrieving history, and managing preferences.
+service NotificationService {
+  // SendNotification sends a notification to a user via the specified channel.
+  rpc SendNotification(SendNotificationRequest) returns (Notification);
+
+  // GetUserNotifications returns paginated notification history for a user.
+  rpc GetUserNotifications(GetUserNotificationsRequest) returns (GetUserNotificationsResponse);
+
+  // UpdateNotificationPreferences updates a user's notification preferences.
+  rpc UpdateNotificationPreferences(UpdateNotificationPreferencesRequest) returns (NotificationPreferences);
+}
+
+// ==================== Notification ====================
+
+message Notification {
+  string id = 1;
+  string user_id = 2;
+  string type = 3;
+  string channel = 4;
+  string template = 5;
+  string title = 6;
+  string body = 7;
+  string recipient = 8;
+  string status = 9;
+  int64 created_at = 10;
+  int64 delivered_at = 11;
+  map<string, string> metadata = 12;
+}
+
+message NotificationPreferences {
+  string user_id = 1;
+  EmailPreferences email = 2;
+  PushPreferences push = 3;
+  SmsPreferences sms = 4;
+  int64 updated_at = 5;
+}
+
+message EmailPreferences {
+  bool enabled = 1;
+  repeated string email_addresses = 2;
+}
+
+message PushPreferences {
+  bool enabled = 1;
+  repeated string device_tokens = 2;
+}
+
+message SmsPreferences {
+  bool enabled = 1;
+  repeated string phone_numbers = 2;
+}
+
+// ==================== Requests / Responses ====================
+
+message SendNotificationRequest {
+  string user_id = 1;
+  string type = 2;
+  string channel = 3;
+  string template = 4;
+  map<string, string> data = 5;
+}
+
+message GetUserNotificationsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string type = 4;
+}
+
+message GetUserNotificationsResponse {
+  repeated Notification notifications = 1;
+  Pagination pagination = 2;
+}
+
+message UpdateNotificationPreferencesRequest {
+  string user_id = 1;
+  string channel = 2;
+  bool enabled = 3;
+}
+
+// ==================== Common ====================
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+}
+
+message Empty {}

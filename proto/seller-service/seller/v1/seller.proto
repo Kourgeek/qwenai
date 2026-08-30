@@ -1,0 +1,309 @@
+syntax = "proto3";
+
+package seller.v1;
+
+option go_package = "seller-service/proto/gen/seller/v1;pb";
+
+// SellerService provides operations for seller management.
+service SellerService {
+  // Seller Operations
+  rpc RegisterSeller(RegisterSellerRequest) returns (Seller);
+  rpc GetSeller(GetSellerRequest) returns (Seller);
+  rpc GetSellerByUserId(GetSellerByUserIdRequest) returns (Seller);
+  rpc UpdateSeller(UpdateSellerRequest) returns (Seller);
+  rpc UpdateSellerStatus(UpdateSellerStatusRequest) returns (Seller);
+  rpc DeleteSeller(DeleteSellerRequest) returns (Empty);
+
+  // Account Operations
+  rpc CreateSellerAccount(CreateSellerAccountRequest) returns (SellerAccount);
+  rpc GetSellerAccount(GetSellerAccountRequest) returns (SellerAccount);
+  rpc UpdateSellerAccount(UpdateSellerAccountRequest) returns (SellerAccount);
+
+  // Document Operations
+  rpc UploadSellerDocument(UploadSellerDocumentRequest) returns (SellerDocument);
+  rpc GetSellerDocument(GetSellerDocumentRequest) returns (SellerDocument);
+  rpc ListSellerDocuments(ListSellerDocumentsRequest) returns (ListSellerDocumentsResponse);
+  rpc VerifySellerDocument(VerifySellerDocumentRequest) returns (SellerDocument);
+
+  // Product Operations
+  rpc GetSellerProducts(GetSellerProductsRequest) returns (GetSellerProductsResponse);
+  rpc UpdateProductStatus(UpdateProductStatusRequest) returns (Product);
+
+  // Order Operations
+  rpc GetSellerOrders(GetSellerOrdersRequest) returns (GetSellerOrdersResponse);
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (Order);
+
+  // Statistics
+  rpc GetSellerStats(GetSellerStatsRequest) returns (SellerStats);
+}
+
+// ==================== Messages ====================
+
+// Seller represents a seller in the system.
+message Seller {
+  string id = 1;
+  string user_id = 2;
+  string business_name = 3;
+  string business_description = 4;
+  string tax_id = 5;
+  string logo_url = 6;
+  string status = 7;
+  double rating = 8;
+  int32 total_ratings = 9;
+  int64 total_sales = 10;
+  int64 total_products = 11;
+  string verification_doc_url = 12;
+  Timestamp created_at = 13;
+  Timestamp updated_at = 14;
+}
+
+// SellerAccount represents a seller's bank account.
+message SellerAccount {
+  string id = 1;
+  string seller_id = 2;
+  string bank_name = 3;
+  string account_number = 4;
+  string routing_number = 5;
+  string account_holder_name = 6;
+  string status = 7;
+  Timestamp created_at = 8;
+  Timestamp updated_at = 9;
+}
+
+// SellerDocument represents a seller's uploaded document.
+message SellerDocument {
+  string id = 1;
+  string seller_id = 2;
+  string type = 3;
+  string file_url = 4;
+  string status = 5;
+  string verification_notes = 6;
+  Timestamp created_at = 7;
+  Timestamp updated_at = 8;
+}
+
+// Product represents a product from Catalog Service.
+message Product {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string sku = 5;
+  string barcode = 6;
+  string category_id = 7;
+  string brand_id = 8;
+  string seller_id = 9;
+  string status = 10;
+  double price = 11;
+  double compare_at_price = 12;
+  double cost_price = 13;
+  int32 quantity = 14;
+  bool is_active = 15;
+  bool is_featured = 16;
+  repeated string image_urls = 17;
+  Timestamp created_at = 18;
+  Timestamp updated_at = 19;
+}
+
+// Order represents an order from Order Service.
+message Order {
+  string id = 1;
+  string user_id = 2;
+  string seller_id = 3;
+  string status = 4;
+  double total_amount = 5;
+  string currency = 6;
+  repeated OrderItem items = 7;
+  ShippingAddress shipping_address = 8;
+  string tracking_number = 9;
+  int64 created_at = 10;
+  int64 updated_at = 11;
+  int64 completed_at = 12;
+}
+
+// OrderItem represents an item in an order.
+message OrderItem {
+  string id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  string sku = 4;
+  int32 quantity = 5;
+  double unit_price = 6;
+  double total_price = 7;
+  string image_url = 8;
+}
+
+// ShippingAddress represents a shipping address.
+message ShippingAddress {
+  string full_name = 1;
+  string line1 = 2;
+  string line2 = 3;
+  string city = 4;
+  string state = 5;
+  string postal_code = 6;
+  string country = 7;
+  string phone = 8;
+}
+
+// SellerStats represents seller statistics.
+message SellerStats {
+  string seller_id = 1;
+  int64 total_orders = 2;
+  int64 pending_orders = 3;
+  int64 processing_orders = 4;
+  int64 shipped_orders = 5;
+  int64 delivered_orders = 6;
+  int64 cancelled_orders = 7;
+  double total_revenue = 8;
+  double average_order_value = 9;
+  double rating = 10;
+  int32 total_ratings = 11;
+  int64 total_products = 12;
+  int64 active_products = 13;
+  int32 low_stock_products = 14;
+  double monthly_revenue = 15;
+  int64 monthly_orders = 16;
+  double revenue_growth_rate = 17;
+}
+
+// ==================== Request Messages ====================
+
+message RegisterSellerRequest {
+  string user_id = 1;
+  string business_name = 2;
+  string business_description = 3;
+  string tax_id = 4;
+  string logo_url = 5;
+}
+
+message GetSellerRequest {
+  string seller_id = 1;
+}
+
+message GetSellerByUserIdRequest {
+  string user_id = 1;
+}
+
+message UpdateSellerRequest {
+  string seller_id = 1;
+  string business_name = 2;
+  string business_description = 3;
+  string tax_id = 4;
+  string logo_url = 5;
+}
+
+message UpdateSellerStatusRequest {
+  string seller_id = 1;
+  string status = 2;
+}
+
+message DeleteSellerRequest {
+  string seller_id = 1;
+}
+
+message CreateSellerAccountRequest {
+  string seller_id = 1;
+  string bank_name = 2;
+  string account_number = 3;
+  string routing_number = 4;
+  string account_holder_name = 5;
+}
+
+message GetSellerAccountRequest {
+  string account_id = 1;
+}
+
+message UpdateSellerAccountRequest {
+  string account_id = 1;
+  string bank_name = 2;
+  string account_number = 3;
+  string routing_number = 4;
+  string account_holder_name = 5;
+}
+
+message UploadSellerDocumentRequest {
+  string seller_id = 1;
+  string type = 2;
+  string file_url = 3;
+}
+
+message GetSellerDocumentRequest {
+  string document_id = 1;
+}
+
+message ListSellerDocumentsRequest {
+  string seller_id = 1;
+  string type = 2;
+  string status = 3;
+  int32 page = 4;
+  int32 page_size = 5;
+}
+
+message VerifySellerDocumentRequest {
+  string document_id = 1;
+  string status = 2;
+  string verification_notes = 3;
+}
+
+message GetSellerProductsRequest {
+  string seller_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string status = 4;
+  string category_id = 5;
+}
+
+message GetSellerProductsResponse {
+  repeated Product products = 1;
+  Pagination pagination = 2;
+}
+
+message UpdateProductStatusRequest {
+  string product_id = 1;
+  string status = 2;
+}
+
+message GetSellerOrdersRequest {
+  string seller_id = 1;
+  string status = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message GetSellerOrdersResponse {
+  repeated Order orders = 1;
+  Pagination pagination = 2;
+}
+
+message UpdateOrderStatusRequest {
+  string seller_id = 1;
+  string order_id = 2;
+  string status = 3;
+  string tracking_number = 4;
+}
+
+message GetSellerStatsRequest {
+  string seller_id = 1;
+  string period = 2;
+}
+
+// ==================== Common Messages ====================
+
+message Empty {}
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message ListSellerDocumentsResponse {
+  repeated SellerDocument documents = 1;
+  Pagination pagination = 2;
+}

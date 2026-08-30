@@ -1,0 +1,308 @@
+syntax = "proto3";
+
+package bff.v1;
+
+option go_package = "projects/bff-service/proto/gen/bff/v1;bffv1";
+
+// BffService defines internal gRPC endpoints for service-to-service communication.
+// Most client-facing operations are REST, but certain aggregation paths
+// use gRPC for performance.
+service BffService {
+  // GetProductCatalog aggregates catalog, search, review/rating data.
+  rpc GetProductCatalog(ProductCatalogRequest) returns (ProductCatalogResponse);
+
+  // GetProductDetails aggregates product, seller, delivery data.
+  rpc GetProductDetails(ProductDetailsRequest) returns (ProductDetailsResponse);
+
+  // GetCartWithPrices fetches cart items with live pricing.
+  rpc GetCartWithPrices(CartWithPricesRequest) returns (CartWithPricesResponse);
+
+  // Checkout aggregates cart, order, payment, notification events.
+  rpc Checkout(CheckoutRequest) returns (CheckoutResponse);
+
+  // GetOrderHistory aggregates order history with item details.
+  rpc GetOrderHistory(GetOrderHistoryRequest) returns (GetOrderHistoryResponse);
+
+  // GetUserProfile aggregates user profile, addresses, wishlist.
+  rpc GetUserProfile(GetUserProfileRequest) returns (UserProfileResponse);
+
+  // GetSellerProfile aggregates seller profile and products.
+  rpc GetSellerProfile(GetSellerProfileRequest) returns (SellerProfileResponse);
+
+  // GetUserNotifications fetches user notifications.
+  rpc GetUserNotifications(GetUserNotificationsRequest) returns (UserNotificationsResponse);
+}
+
+// ==================== Product Catalog ====================
+
+message ProductCatalogRequest {
+  string query = 1;
+  string category = 2;
+  string brand = 3;
+  float min_price = 4;
+  float max_price = 5;
+  string sort = 6;
+  int32 page = 7;
+  int32 page_size = 8;
+}
+
+message ProductCatalogResponse {
+  repeated Product products = 1;
+  Pagination pagination = 2;
+}
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  float price = 4;
+  string currency = 5;
+  string category = 6;
+  string brand = 7;
+  int32 quantity = 8;
+  string image_url = 9;
+  float avg_rating = 10;
+  int32 review_count = 11;
+  string seller_id = 12;
+  string seller_name = 13;
+  bool is_active = 14;
+  int64 created_at = 15;
+}
+
+// ==================== Product Details ====================
+
+message ProductDetailsRequest {
+  string product_id = 1;
+}
+
+message ProductDetailsResponse {
+  Product product = 1;
+  SellerInfo seller = 2;
+  DeliveryInfo delivery = 3;
+  repeated Review reviews = 4;
+}
+
+message SellerInfo {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  float avg_rating = 4;
+  int32 product_count = 5;
+  string logo_url = 6;
+}
+
+message DeliveryInfo {
+  string method = 1;
+  int32 estimated_days = 2;
+  float cost = 3;
+}
+
+message Review {
+  string id = 1;
+  string user_id = 2;
+  string username = 3;
+  int32 rating = 4;
+  string comment = 5;
+  int64 created_at = 6;
+}
+
+// ==================== Cart ====================
+
+message CartWithPricesRequest {
+  string user_id = 1;
+}
+
+message CartWithPricesResponse {
+  string cart_id = 1;
+  repeated CartItem items = 2;
+  float subtotal = 3;
+  float shipping_cost = 4;
+  float total = 5;
+  string currency = 6;
+}
+
+message CartItem {
+  string id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  string sku = 4;
+  int32 quantity = 5;
+  float unit_price = 6;
+  float total_price = 7;
+  string image_url = 8;
+  bool is_available = 9;
+}
+
+// ==================== Checkout ====================
+
+message CheckoutRequest {
+  string user_id = 1;
+  string cart_id = 2;
+  ShippingAddress shipping_address = 3;
+  string payment_method = 4;
+}
+
+message CheckoutResponse {
+  string order_id = 1;
+  string status = 2;
+  float total_amount = 3;
+  string currency = 4;
+  int64 created_at = 5;
+}
+
+message ShippingAddress {
+  string full_name = 1;
+  string line1 = 2;
+  string line2 = 3;
+  string city = 4;
+  string state = 5;
+  string postal_code = 6;
+  string country = 7;
+  string phone = 8;
+}
+
+// ==================== Order History ====================
+
+message GetOrderHistoryRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string status = 4;
+}
+
+message GetOrderHistoryResponse {
+  repeated Order orders = 1;
+  Pagination pagination = 2;
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  string status = 3;
+  float total_amount = 4;
+  string currency = 5;
+  repeated OrderItem items = 6;
+  ShippingAddress shipping_address = 7;
+  string payment_method = 8;
+  string tracking_number = 9;
+  int64 created_at = 10;
+  int64 updated_at = 11;
+}
+
+message OrderItem {
+  string product_id = 1;
+  string product_name = 2;
+  string sku = 3;
+  int32 quantity = 4;
+  float unit_price = 5;
+  float total_price = 6;
+  string image_url = 7;
+}
+
+// ==================== User Profile ====================
+
+message GetUserProfileRequest {
+  string user_id = 1;
+}
+
+message UserProfileResponse {
+  User user = 1;
+  repeated Address addresses = 2;
+  repeated WishlistItem wishlist = 3;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string phone = 5;
+  string avatar_url = 6;
+  string role = 7;
+  int64 created_at = 8;
+}
+
+message Address {
+  string id = 1;
+  string full_name = 2;
+  string line1 = 3;
+  string line2 = 4;
+  string city = 5;
+  string state = 6;
+  string postal_code = 7;
+  string country = 8;
+  string phone = 9;
+  bool is_default = 10;
+}
+
+message WishlistItem {
+  string id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  string image_url = 4;
+  float price = 5;
+  string currency = 6;
+  int64 added_at = 7;
+}
+
+// ==================== Seller Profile ====================
+
+message GetSellerProfileRequest {
+  string seller_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message SellerProfileResponse {
+  Seller seller = 1;
+  repeated Product products = 2;
+  Pagination pagination = 3;
+}
+
+message Seller {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string logo_url = 4;
+  float avg_rating = 5;
+  int32 product_count = 6;
+  int32 total_reviews = 7;
+  bool is_verified = 8;
+  string created_at = 9;
+}
+
+// ==================== Notifications ====================
+
+message GetUserNotificationsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  bool unread_only = 4;
+}
+
+message UserNotificationsResponse {
+  repeated Notification notifications = 1;
+  Pagination pagination = 2;
+  int32 unread_count = 3;
+}
+
+message Notification {
+  string id = 1;
+  string user_id = 2;
+  string title = 3;
+  string message = 4;
+  string type = 5;
+  bool is_read = 6;
+  int64 created_at = 7;
+}
+
+// ==================== Common ====================
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+}
+
+message Empty {}

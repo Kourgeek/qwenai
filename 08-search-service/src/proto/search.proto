@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package search;
+
+// ── Search Service RPCs ──────────────────────────────────────────────────────
+
+service SearchService {
+  rpc SearchProducts (SearchProductsRequest) returns (SearchProductsResponse);
+  rpc SuggestProducts (SuggestProductsRequest) returns (SuggestProductsResponse);
+  rpc IndexProduct (IndexProductRequest) returns (IndexProductResponse);
+  rpc ReindexCatalog (ReindexCatalogRequest) returns (ReindexCatalogResponse);
+}
+
+// ── SearchProducts ──────────────────────────────────────────────────────────
+
+message SearchProductsRequest {
+  string query = 1;
+  repeated string categories = 2;
+  repeated string brands = 3;
+  double min_price = 4;
+  double max_price = 5;
+  string sort_by = 6;
+  string sort_order = 7;
+  int32 page = 8;
+  int32 page_size = 9;
+}
+
+message SearchProductsResponse {
+  repeated Product products = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+// ── SuggestProducts ─────────────────────────────────────────────────────────
+
+message SuggestProductsRequest {
+  string query = 1;
+  int32 limit = 2;
+}
+
+message SuggestProductsResponse {
+  repeated string suggestions = 1;
+}
+
+// ── IndexProduct ────────────────────────────────────────────────────────────
+
+message IndexProductRequest {
+  string product_id = 1;
+}
+
+message IndexProductResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ── ReindexCatalog ──────────────────────────────────────────────────────────
+
+message ReindexCatalogRequest {
+  int32 batch_size = 1;
+}
+
+message ReindexCatalogResponse {
+  int32 indexed_count = 1;
+  bool success = 2;
+}
+
+// ── Shared message ──────────────────────────────────────────────────────────
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+  string brand = 5;
+  double price = 6;
+  map<string, string> attributes = 7;
+}
+
+// ── Catalog Service RPCs (referenced by catalog-client) ─────────────────────
+
+service CatalogService {
+  rpc GetProduct (ProductId) returns (ProductResponse);
+  rpc ListProducts (ListProductsRequest) returns (ListProductsResponse);
+}
+
+message ProductId {
+  string id = 1;
+}
+
+message ProductResponse {
+  Product product = 1;
+}
+
+message ListProductsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+}

@@ -1,0 +1,424 @@
+# ============================================================
+# HyperScale Marketplace — Docker Compose Override (Development)
+# ============================================================
+#
+# This file is automatically loaded alongside unified-docker-compose.yml
+# by Docker Compose when running `docker compose up` (without --profile flags).
+#
+# Key development features:
+#   - Hot reload for all Python services (uvicorn --reload)
+#   - Debug mode enabled (DEBUG=1)
+#   - Verbose logging (LOG_LEVEL=debug)
+#   - Source directory mounts for live code updates
+#   - Increased resource limits for debugging
+#
+# Usage:
+#   docker compose up -d              # Uses this override automatically
+#   docker compose --profile services up -d   # Also uses this override
+# ============================================================
+
+services:
+  # ============================================================
+  # SERVICES — Auth (gRPC) — Dev Override
+  # ============================================================
+
+  auth-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./01-auth-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./01-auth-service/src:/app/src
+      - ./01-auth-service/proto:/app/proto
+      - ./01-auth-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 50052
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — User (gRPC) — Dev Override
+  # ============================================================
+
+  user-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./02-user-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./02-user-service/src:/app/src
+      - ./02-user-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 50053
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — Catalog (gRPC + HTTP) — Dev Override
+  # ============================================================
+
+  catalog-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./03-catalog-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./03-catalog-service/src:/app/src
+      - ./03-catalog-service/proto:/app/proto
+      - ./03-catalog-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8080
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # ============================================================
+  # SERVICES — Cart (gRPC + HTTP) — Dev Override
+  # ============================================================
+
+  cart-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./04-cart-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./04-cart-service/src:/app/src
+      - ./04-cart-service/proto:/app/proto
+      - ./04-cart-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8081
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — Order (gRPC) — Dev Override
+  # ============================================================
+
+  order-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./05-order-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./05-order-service/src:/app/src
+      - ./05-order-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8085
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — Payment (gRPC + HTTP) — Dev Override
+  # ============================================================
+
+  payment-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./06-payment-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./06-payment-service/src:/app/src
+      - ./06-payment-service/proto:/app/proto
+      - ./06-payment-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8082
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — Notification (gRPC + HTTP) — Dev Override
+  # ============================================================
+
+  notification-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./07-notification-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./07-notification-service/src:/app/src
+      - ./07-notification-service/proto:/app/proto
+      - ./07-notification-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8086
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — Search (gRPC + HTTP) — Dev Override
+  # ============================================================
+
+  search-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./08-search-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./08-search-service/src:/app/src
+      - ./08-search-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8083
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # ============================================================
+  # SERVICES — Seller (HTTP + gRPC) — Dev Override
+  # ============================================================
+
+  seller-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./09-seller-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./09-seller-service/src:/app/src
+      - ./09-seller-service/proto:/app/proto
+      - ./09-seller-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8085
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — Admin (HTTP) — Dev Override
+  # ============================================================
+
+  admin-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./10-admin-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./10-admin-service/src:/app/src
+      - ./10-admin-service/proto:/app/proto
+      - ./10-admin-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8085
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — BFF (Backend For Frontend) (HTTP) — Dev Override
+  # ============================================================
+
+  bff-service:
+    profiles: ["services", "all"]
+    build:
+      context: ./11-bff-service
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./11-bff-service/src:/app/src
+      - ./11-bff-service/proto:/app/proto
+      - ./11-bff-service/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8085
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES — Gateway (HTTP) — Dev Override
+  # ============================================================
+
+  gateway:
+    profiles: ["services", "all"]
+    build:
+      context: ./12-gateway
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    volumes:
+      - ./12-gateway/src:/app/src
+      - ./12-gateway/proto:/app/proto
+      - ./12-gateway/pyproject.toml:/app/pyproject.toml
+    environment:
+      - DEBUG=1
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RELOAD=true
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8080
+      --reload
+      --reload-dir /app/src
+      --log-level debug
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M

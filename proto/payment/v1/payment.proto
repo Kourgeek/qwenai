@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package payment.v1;
+
+option go_package = "payment-service/proto/gen/payment/v1;paymentv1";
+
+// PaymentService provides payment operations for the marketplace.
+service PaymentService {
+  rpc CreatePayment(CreatePaymentRequest) returns (Payment);
+  rpc ConfirmPayment(ConfirmPaymentRequest) returns (Payment);
+  rpc GetPayment(GetPaymentRequest) returns (Payment);
+  rpc RefundPayment(RefundPaymentRequest) returns (Refund);
+  rpc GetUserPayments(GetUserPaymentsRequest) returns (PaymentList);
+  rpc Webhook(WebhookRequest) returns (WebhookResponse);
+}
+
+// ==================== Common ====================
+
+message Empty {}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+}
+
+// ==================== Payment ====================
+
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_STATUS_PENDING = 1;
+  PAYMENT_STATUS_CREATED = 2;
+  PAYMENT_STATUS_PROCESSING = 3;
+  PAYMENT_STATUS_COMPLETED = 4;
+  PAYMENT_STATUS_FAILED = 5;
+  PAYMENT_STATUS_REFUNDED = 6;
+  PAYMENT_STATUS_PARTIALLY_REFUNDED = 7;
+  PAYMENT_STATUS_CANCELLED = 8;
+}
+
+enum PaymentProvider {
+  PAYMENT_PROVIDER_UNSPECIFIED = 0;
+  PAYMENT_PROVIDER_STRIPE = 1;
+  PAYMENT_PROVIDER_YOOMONEY = 2;
+}
+
+enum PaymentMethodType {
+  PAYMENT_METHOD_TYPE_UNSPECIFIED = 0;
+  PAYMENT_METHOD_TYPE_CARD = 1;
+  PAYMENT_METHOD_TYPE_BANK_TRANSFER = 2;
+  PAYMENT_METHOD_TYPE_E_WALLET = 3;
+  PAYMENT_METHOD_TYPE_CRYPTO = 4;
+}
+
+message Payment {
+  string id = 1;
+  string order_id = 2;
+  string user_id = 3;
+  int64 amount = 4;
+  string currency = 5;
+  PaymentStatus status = 6;
+  PaymentProvider provider = 7;
+  string provider_payment_id = 8;
+  string provider_error = 9;
+  string payment_method_id = 10;
+  Timestamp created_at = 11;
+  Timestamp updated_at = 12;
+  Timestamp paid_at = 13;
+}
+
+message PaymentList {
+  repeated Payment payments = 1;
+  Pagination pagination = 2;
+}
+
+message PaymentMethod {
+  string id = 1;
+  string user_id = 2;
+  PaymentMethodType type = 3;
+  string last_four = 4;
+  string expiry = 5;
+  bool is_default = 6;
+  Timestamp created_at = 7;
+}
+
+message Refund {
+  string id = 1;
+  string payment_id = 2;
+  string user_id = 3;
+  int64 amount = 4;
+  string currency = 5;
+  string status = 6;
+  string provider_refund_id = 7;
+  string reason = 8;
+  Timestamp created_at = 9;
+  Timestamp refunded_at = 10;
+}
+
+// ==================== Requests ====================
+
+message CreatePaymentRequest {
+  string order_id = 1;
+  string user_id = 2;
+  string payment_method_id = 3;
+  string currency = 4;
+  int64 amount = 5;
+  PaymentProvider provider = 6;
+}
+
+message ConfirmPaymentRequest {
+  string payment_id = 1;
+  map<string, string> provider_data = 2;
+}
+
+message GetPaymentRequest {
+  string payment_id = 1;
+}
+
+message RefundPaymentRequest {
+  string payment_id = 1;
+  int64 amount = 2;
+  string reason = 3;
+}
+
+message GetUserPaymentsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  PaymentStatus status_filter = 4;
+}
+
+message WebhookRequest {
+  string event_type = 1;
+  map<string, string> payload = 2;
+}
+
+message WebhookResponse {
+  bool success = 1;
+  string message = 2;
+}

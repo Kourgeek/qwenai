@@ -1,0 +1,163 @@
+# ============================================================
+# HyperScale Marketplace — Docker Ignore
+# ============================================================
+#
+# Optimizes Docker build context by excluding unnecessary files.
+# This significantly reduces build context size and speeds up builds.
+# ============================================================
+
+# ============================================================
+# Version Control
+# ============================================================
+.git
+.gitignore
+.gitattributes
+.gitmodules
+
+# ============================================================
+# Documentation
+# ============================================================
+*.md
+README*
+CHANGELOG*
+LICENSE*
+docs/
+documentation/
+
+# ============================================================
+# IDE & Editor Files
+# ============================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-*
+*.tmPreferences
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+# ============================================================
+# Python
+# ============================================================
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+*.pyi
+
+# ============================================================
+# Node.js
+# ============================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnp/
+
+# ============================================================
+# Environment Files (never include secrets in Docker image)
+# ============================================================
+.env
+.env.*
+!.env.example
+!.env.template
+
+# ============================================================
+# Docker Files (avoid recursive context issues)
+# ============================================================
+docker-compose*.yml
+docker-compose.override*.yml
+Dockerfile
+Dockerfile.*
+.dockerignore
+!.github/workflows/
+
+# ============================================================
+# Terraform
+# ============================================================
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+
+# ============================================================
+# Kubernetes
+# ============================================================
+.kube/
+kubeconfig*
+k8s/
+
+# ============================================================
+# CI/CD
+# ============================================================
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+.travis.yml
+*.yml.dist
+*.yml.sample
+
+# ============================================================
+# Testing
+# ============================================================
+tests/
+test/
+*.test.*
+*.spec.*
+conftest.py
+setup.cfg
+tox.ini
+pytest.ini
+
+# ============================================================
+# Build Artifacts
+# ============================================================
+*.log
+*.log.*
+*.tmp
+*.bak
+*.cache
+*.swp
+*.orig
+
+# ============================================================
+# OS Files
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# Project-specific
+# ============================================================
+migration_plan/
+DETAILED_PLAN.md
+remaining_tasks.md
+completed_tasks/
+tasks/
+proto/
+protos/
+*.proto
+catalog_client.py
+00-infrastructure/

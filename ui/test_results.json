@@ -1,0 +1,9 @@
+{
+  "frontend_accessible": true,
+  "login_page_status": 200,
+  "login_page_url": "http://localhost:3000/login",
+  "login_success": true,
+  "register_success": false,
+  "register_error": "No visible error, stayed on register page",
+  "console_errors": true
+}

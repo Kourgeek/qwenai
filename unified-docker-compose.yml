@@ -1,0 +1,776 @@
+# ============================================================
+# HyperScale Marketplace - Unified Docker Compose
+# ============================================================
+
+version: '3.8'
+
+services:
+  # ============================================================
+  # INFRASTRUCTURE - Databases & Caching
+  # ============================================================
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: marketplace-postgres
+    restart: unless-stopped
+    profiles: ["infra", "dev", "services", "monitoring", "all"]
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: marketplace
+      POSTGRES_INITDB_ARGS: --encoding=UTF-8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  redis:
+    image: redis:7-alpine
+    container_name: marketplace-redis
+    restart: unless-stopped
+    profiles: ["infra", "dev", "services", "monitoring", "all"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ============================================================
+  # INFRASTRUCTURE - Search
+  # ============================================================
+
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    container_name: marketplace-elasticsearch
+    restart: unless-stopped
+    profiles: ["infra", "services", "monitoring", "all"]
+    ports:
+      - "9200:9200"
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # ============================================================
+  # INFRASTRUCTURE - Message Broker
+  # ============================================================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: marketplace-zookeeper
+    restart: unless-stopped
+    profiles: ["infra", "services", "monitoring", "all"]
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc localhost 2181 | grep -q Mode:"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: marketplace-kafka
+    restart: unless-stopped
+    profiles: ["infra", "services", "monitoring", "all"]
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 15s
+      timeout: 15s
+      retries: 30
+      start_period: 60s
+    networks:
+      - marketplace
+
+  # ============================================================
+  # SERVICES - Auth (gRPC)
+  # ============================================================
+
+  auth-service:
+    build:
+      context: ./01-auth-service
+      dockerfile: Dockerfile
+    container_name: marketplace-auth-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "50051:50054"
+      - "8091:8080"
+    environment:
+      - GRPC_PORT=50054
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=auth_db
+      - DB_SSL_MODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - JWT_EXPIRY=${JWT_EXPIRY:-3600}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',50054)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - User (gRPC)
+  # ============================================================
+
+  user-service:
+    build:
+      context: ./02-user-service
+      dockerfile: Dockerfile
+    container_name: marketplace-user-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "50052:50053"
+    environment:
+      - GRPC_PORT=50053
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=user_db
+      - DB_SSL_MODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=2
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=50054
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',50053)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - Catalog (gRPC + HTTP)
+  # ============================================================
+
+  catalog-service:
+    build:
+      context: ./03-catalog-service
+      dockerfile: Dockerfile
+    container_name: marketplace-catalog-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "8084:8080"
+      - "50053:50051"
+    environment:
+      - SERVER_PORT=8080
+      - GRPC_PORT=50051
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=catalog_db
+      - DB_SSL_MODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8080)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ============================================================
+  # SERVICES - Cart (gRPC + HTTP)
+  # ============================================================
+
+  cart-service:
+    build:
+      context: ./04-cart-service
+      dockerfile: Dockerfile
+    container_name: marketplace-cart-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "50054:50050"
+      - "8081:8081"
+    environment:
+      - GRPC_PORT=50050
+      - SERVER_PORT=8081
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=cart_db
+      - DB_SSL_MODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=3
+      - REDIS_CART_TTL=86400
+      - REDIS_SAVED_TTL=2592000
+      - CATALOG_SERVICE_HOST=catalog-service
+      - CATALOG_SERVICE_PORT=50051
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8081)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - Order (gRPC)
+  # ============================================================
+
+  order-service:
+    build:
+      context: ./05-order-service
+      dockerfile: Dockerfile
+    container_name: marketplace-order-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "50055:50055"
+      - "8085:8085"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=order_db
+      - DB_SSL_MODE=disable
+      - GRPC_PORT=50055
+      - HTTP_PORT=8085
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_ORDER_CREATED_TOPIC=order.created
+      - KAFKA_ORDER_STATUS_CHANGED_TOPIC=order.status_changed
+      - KAFKA_MAX_RETRIES=3
+      - CART_SERVICE_HOST=cart-service
+      - CART_SERVICE_PORT=50050
+      - CATALOG_SERVICE_HOST=catalog-service
+      - CATALOG_SERVICE_PORT=50051
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      cart-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8085/health')\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - Payment (gRPC + HTTP)
+  # ============================================================
+
+  payment-service:
+    build:
+      context: ./06-payment-service
+      dockerfile: Dockerfile
+    container_name: marketplace-payment-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "50056:50056"
+      - "8082:8082"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=payment_db
+      - DB_SSL_MODE=disable
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TOPIC=marketplace-events
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',50056)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - Notification (gRPC + HTTP)
+  # ============================================================
+
+  notification-service:
+    build:
+      context: ./07-notification-service
+      dockerfile: Dockerfile
+    container_name: marketplace-notification-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "50057:50057"
+      - "8086:8086"
+    environment:
+      - GRPC_PORT=50057
+      - HTTP_PORT=8086
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=notification_db
+      - DB_SSL_MODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=4
+      - REDIS_CART_TTL=86400
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_CONSUMER_GROUP=notification-service-group
+      - KAFKA_TOPIC_ORDER_CREATED=order.created
+      - KAFKA_TOPIC_ORDER_STATUS_CHANGED=order.status_changed
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-noreply@marketplace.local}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=json
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',50057)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - Search (gRPC + HTTP)
+  # ============================================================
+
+  search-service:
+    build:
+      context: ./08-search-service
+      dockerfile: Dockerfile
+    container_name: marketplace-search-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "50058:50058"
+      - "8087:8083"
+    environment:
+      - GRPC_PORT=50058
+      - HTTP_PORT=8083
+      - ES_HOSTS=http://elasticsearch:9200
+      - ES_INDEX_NAME=products
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=search_db
+      - DB_SSL_MODE=disable
+      - CATALOG_SERVICE_HOST=catalog-service
+      - CATALOG_SERVICE_PORT=50051
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',50058)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ============================================================
+  # SERVICES - Seller (HTTP + gRPC)
+  # ============================================================
+
+  seller-service:
+    build:
+      context: ./09-seller-service
+      dockerfile: Dockerfile
+    container_name: marketplace-seller-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "8090:8085"
+      - "19090:9090"
+    environment:
+      - PORT=8085
+      - GRPC_PORT=9090
+      - HTTP_PORT=8085
+      - ENV=production
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=seller_db
+      - DB_SSL_MODE=disable
+      - CATALOG_HOST=catalog-service
+      - CATALOG_PORT=50051
+      - ORDER_HOST=order-service
+      - ORDER_PORT=50055
+      - AUTH_HOST=auth-service
+      - AUTH_PORT=50054
+    depends_on:
+      postgres:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8085)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - Admin (HTTP)
+  # ============================================================
+
+  admin-service:
+    build:
+      context: ./10-admin-service
+      dockerfile: Dockerfile
+    container_name: marketplace-admin-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "8088:8085"
+    environment:
+      - PORT=8085
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=admin_db
+      - DB_SSL_MODE=disable
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=50054
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8085)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - BFF (Backend For Frontend) (HTTP)
+  # ============================================================
+
+  bff-service:
+    build:
+      context: ./11-bff-service
+      dockerfile: Dockerfile
+    container_name: marketplace-bff-service
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "8089:8085"
+    environment:
+      - SERVER_PORT=8085
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=5
+      - REDIS_PREFIX="bff:"
+      - JWT_SECRET=${JWT_SECRET:-bff-secret-key-change-in-production}
+      - JWT_EXPIRY=${JWT_EXPIRY:-3600}
+      - JWT_ISSUER=bff-service
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-*}
+      - RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-100}
+      - RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-200}
+      - CATALOG_SERVICE_HOST=catalog-service
+      - CATALOG_SERVICE_PORT=50051
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=50054
+      - CART_SERVICE_HOST=cart-service
+      - CART_SERVICE_PORT=50050
+      - ORDER_SERVICE_HOST=order-service
+      - ORDER_SERVICE_PORT=50055
+      - PAYMENT_SERVICE_HOST=payment-service
+      - PAYMENT_SERVICE_PORT=50056
+      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_PORT=50053
+      - SELLER_SERVICE_HOST=seller-service
+      - SELLER_SERVICE_PORT=19090
+      - SEARCH_SERVICE_HOST=search-service
+      - SEARCH_SERVICE_PORT=50058
+      - NOTIFICATION_SERVICE_HOST=notification-service
+      - NOTIFICATION_SERVICE_PORT=50057
+    depends_on:
+      redis:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      cart-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      seller-service:
+        condition: service_healthy
+      search-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8085)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # SERVICES - Gateway (HTTP) - API Gateway / Load Balancer
+  # ============================================================
+
+  gateway:
+    build:
+      context: ./12-gateway
+      dockerfile: Dockerfile
+    container_name: marketplace-gateway
+    restart: unless-stopped
+    profiles: ["services", "all"]
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=50054
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8080)); s.close()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # INFRASTRUCTURE - Grafana (Dashboards & Alerting)
+  # ============================================================
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: marketplace-grafana
+    restart: unless-stopped
+    profiles: ["infrastructure", "all"]
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_INSTALL_PLUGINS=
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - ./00-infrastructure/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./00-infrastructure/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - marketplace
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ============================================================
+  # VOLUMES
+  # ============================================================
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+
+  # ============================================================
+  # NETWORK
+  # ============================================================
+
+networks:
+  marketplace:
+    driver: bridge

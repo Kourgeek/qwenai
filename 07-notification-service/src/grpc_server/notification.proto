@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package notification;
+
+option py_generic_services = true;
+
+// ------------------------------------------------------------------
+// Notification Service gRPC API
+// ------------------------------------------------------------------
+
+service NotificationService {
+  // SendEmail sends an email notification
+  rpc SendEmail (SendEmailRequest) returns (SendEmailResponse);
+
+  // SendSms sends an SMS notification
+  rpc SendSms (SendSmsRequest) returns (SendSmsResponse);
+
+  // SendPush sends a push notification
+  rpc SendPush (SendPushRequest) returns (SendPushResponse);
+
+  // GetNotificationHistory retrieves recent notification history
+  rpc GetNotificationHistory (HistoryRequest) returns (NotificationHistoryResponse);
+
+  // GetNotificationStats retrieves notification statistics
+  rpc GetNotificationStats (Empty) returns (NotificationStatsResponse);
+}
+
+// -- Request / Response types --
+
+message SendEmailRequest {
+  string to_email = 1;
+  string subject = 2;
+  string body = 3;
+}
+
+message SendEmailResponse {
+  string status = 1;
+  string message_id = 2;
+}
+
+message SendSmsRequest {
+  string phone = 1;
+  string body = 2;
+}
+
+message SendSmsResponse {
+  string status = 1;
+  string message_id = 2;
+}
+
+message SendPushRequest {
+  string device_token = 1;
+  string title = 2;
+  string body = 3;
+}
+
+message SendPushResponse {
+  string status = 1;
+  string message_id = 2;
+}
+
+message HistoryRequest {
+  int32 limit = 1;
+}
+
+message NotificationHistoryResponse {
+  repeated NotificationEntry notifications = 1;
+}
+
+message NotificationEntry {
+  string notification_type = 1;
+  string to = 2;
+  string subject = 3;
+  string body = 4;
+  string status = 5;
+}
+
+message NotificationStatsResponse {
+  int64 email_sent = 1;
+  int64 sms_sent = 2;
+  int64 push_sent = 3;
+  int64 email_failed = 4;
+  int64 sms_failed = 5;
+  int64 push_failed = 6;
+}
+
+message Empty {}

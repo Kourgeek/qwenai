@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package search.v1;
+
+option go_package = "projects/search-service/proto/gen/search/v1;searchv1";
+
+// SearchService provides full-text search, suggestions, and product indexing.
+service SearchService {
+  // SearchProducts performs full-text search with filters and sorting.
+  rpc SearchProducts(SearchProductsRequest) returns (SearchProductsResponse);
+
+  // SuggestProducts returns autocomplete suggestions.
+  rpc SuggestProducts(SuggestProductsRequest) returns (SuggestProductsResponse);
+
+  // IndexProduct indexes a single product into Elasticsearch.
+  rpc IndexProduct(IndexProductRequest) returns (IndexProductResponse);
+
+  // ReindexCatalog reindexes all products from Catalog Service.
+  rpc ReindexCatalog(ReindexCatalogRequest) returns (ReindexCatalogResponse);
+}
+
+// ==================== Search ====================
+
+message SearchProductsRequest {
+  string query = 1;
+  repeated string category_ids = 2;
+  repeated string brand_ids = 3;
+  double min_price = 4;
+  double max_price = 5;
+  double min_rating = 6;
+  string sort_by = 7;
+  string sort_order = 8;
+  int32 page = 9;
+  int32 page_size = 10;
+}
+
+message SearchProductsResponse {
+  repeated ProductHit products = 1;
+  Pagination pagination = 2;
+  repeated Aggregation aggregations = 3;
+  double took_ms = 4;
+}
+
+message ProductHit {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string sku = 4;
+  string category_id = 5;
+  repeated string category_ids = 6;
+  string brand_id = 7;
+  string brand_name = 8;
+  double price = 9;
+  double compare_at_price = 10;
+  double cost_price = 11;
+  int32 quantity = 12;
+  double rating = 13;
+  int32 review_count = 14;
+  repeated string image_urls = 15;
+  map<string, string> metadata = 16;
+  double score = 17;
+  string status = 18;
+  bool is_featured = 19;
+  bool is_active = 20;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+}
+
+message Aggregation {
+  string key = 1;
+  string field = 2;
+  repeated AggBucket buckets = 3;
+}
+
+message AggBucket {
+  string key = 1;
+  int64 count = 2;
+}
+
+// ==================== Suggest ====================
+
+message SuggestProductsRequest {
+  string query = 1;
+  int32 limit = 2;
+}
+
+message SuggestProductsResponse {
+  repeated Suggestion suggestions = 1;
+  double took_ms = 2;
+}
+
+message Suggestion {
+  string text = 1;
+  int32 count = 2;
+}
+
+// ==================== Index ====================
+
+message IndexProductRequest {
+  string product_id = 1;
+}
+
+message IndexProductResponse {
+  string product_id = 1;
+  bool indexed = 2;
+  string message = 3;
+}
+
+message ReindexCatalogRequest {}
+
+message ReindexCatalogResponse {
+  int32 total_products = 1;
+  int32 indexed = 2;
+  int32 failed = 3;
+  string message = 4;
+}
+
+// ==================== Common ====================
+
+message Empty {}

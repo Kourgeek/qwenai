@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package cart.v1;
+
+option go_package = "projects/cart-service/proto/gen/cart/v1;cartv1";
+
+// CartService provides operations for managing user shopping carts.
+service CartService {
+  // GetCart returns the current shopping cart for a user.
+  rpc GetCart(GetCartRequest) returns (Cart);
+
+  // AddItem adds a product to the user's cart or increases quantity.
+  rpc AddItem(AddItemRequest) returns (CartItem);
+
+  // UpdateItem updates the quantity of a product in the cart.
+  rpc UpdateItem(UpdateItemRequest) returns (CartItem);
+
+  // RemoveItem removes a product from the cart.
+  rpc RemoveItem(RemoveItemRequest) returns (Empty);
+
+  // ClearCart removes all items from the cart.
+  rpc ClearCart(ClearCartRequest) returns (Empty);
+
+  // SaveForLater moves an item from cart to saved for later list.
+  rpc SaveForLater(SaveForLaterRequest) returns (SavedItem);
+
+  // MoveToCart moves a saved item back to the cart.
+  rpc MoveToCart(MoveToCartRequest) returns (CartItem);
+}
+
+// ==================== Common ====================
+
+message Empty {}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+// ==================== Cart ====================
+
+message Cart {
+  string user_id = 1;
+  repeated CartItem items = 2;
+  int32 total_items = 3;
+  double total_price = 4;
+  Timestamp updated_at = 5;
+}
+
+message CartItem {
+  string id = 1;
+  string user_id = 2;
+  string product_id = 3;
+  string product_name = 4;
+  string product_sku = 5;
+  string product_image_url = 6;
+  double unit_price = 7;
+  int32 quantity = 8;
+  double subtotal = 9;
+  string status = 10;
+  Timestamp created_at = 11;
+  Timestamp updated_at = 12;
+}
+
+// ==================== Product Detail ====================
+
+message ProductDetail {
+  string id = 1;
+  string name = 2;
+  string sku = 3;
+  string description = 4;
+  double price = 5;
+  double compare_at_price = 6;
+  string category_id = 7;
+  string brand_id = 8;
+  string status = 9;
+  bool is_active = 10;
+  repeated string image_urls = 11;
+}
+
+// ==================== Saved Item ====================
+
+message SavedItem {
+  string id = 1;
+  string user_id = 2;
+  string product_id = 3;
+  string product_name = 4;
+  string product_sku = 5;
+  double unit_price = 6;
+  int32 quantity = 7;
+  string status = 8;
+  Timestamp saved_at = 9;
+  Timestamp created_at = 10;
+}
+
+// ==================== Requests ====================
+
+message GetCartRequest {
+  string user_id = 1;
+}
+
+message AddItemRequest {
+  string user_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+}
+
+message UpdateItemRequest {
+  string user_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+}
+
+message RemoveItemRequest {
+  string user_id = 1;
+  string product_id = 2;
+}
+
+message ClearCartRequest {
+  string user_id = 1;
+}
+
+message SaveForLaterRequest {
+  string user_id = 1;
+  string product_id = 2;
+}
+
+message MoveToCartRequest {
+  string user_id = 1;
+  string product_id = 2;
+}

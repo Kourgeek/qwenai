@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package payment;
+
+// ---------------------------------------------------------------------------
+// Payment Service gRPC API
+// ---------------------------------------------------------------------------
+
+service PaymentService {
+  rpc CreatePayment(CreatePaymentRequest) returns (PaymentResponse);
+  rpc ConfirmPayment(ConfirmPaymentRequest) returns (PaymentResponse);
+  rpc GetPayment(GetPaymentRequest) returns (PaymentResponse);
+  rpc RefundPayment(RefundPaymentRequest) returns (RefundResponse);
+  rpc GetUserPayments(GetUserPaymentsRequest) returns (PaymentListResponse);
+  rpc Webhook(WebhookRequest) returns (WebhookResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Requests
+// ---------------------------------------------------------------------------
+
+message CreatePaymentRequest {
+  string order_id = 1;
+  string user_id = 2;
+  double amount = 3;
+  string currency = 4;
+  string provider = 5;          // STRIPE | YOOMONEY
+  string description = 6;
+}
+
+message ConfirmPaymentRequest {
+  string payment_id = 1;
+}
+
+message GetPaymentRequest {
+  string payment_id = 1;
+}
+
+message RefundPaymentRequest {
+  string payment_id = 1;
+  string user_id = 2;
+  double amount = 3;
+  string reason = 4;
+}
+
+message GetUserPaymentsRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message WebhookRequest {
+  string provider = 1;          // stripe | yoomoney
+  bytes payload = 2;
+  string signature = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Responses
+// ---------------------------------------------------------------------------
+
+message PaymentResponse {
+  string payment_id = 1;
+  string order_id = 2;
+  string status = 3;            // PENDING | PROCESSING | COMPLETED | FAILED | REFUNDED
+  string amount = 4;
+  string currency = 5;
+  string provider = 6;
+  string provider_payment_id = 7;
+}
+
+message PaymentListResponse {
+  repeated PaymentResponse payments = 1;
+}
+
+message RefundResponse {
+  string refund_id = 1;
+  string payment_id = 2;
+  string status = 3;
+  string amount = 4;
+  string currency = 5;
+  string provider_refund_id = 6;
+}
+
+message WebhookResponse {
+  string status = 1;
+}

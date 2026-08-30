@@ -1,0 +1,360 @@
+syntax = "proto3";
+
+package catalog.v1;
+
+option go_package = "catalog-service/proto/catalog/v1;catalogv1";
+
+// CatalogService provides CRUD operations for categories, brands, and products.
+service CatalogService {
+  // Category RPCs
+  rpc CreateCategory(CreateCategoryRequest) returns (Category);
+  rpc GetCategory(GetCategoryRequest) returns (Category);
+  rpc UpdateCategory(UpdateCategoryRequest) returns (Category);
+  rpc DeleteCategory(DeleteCategoryRequest) returns (Empty);
+  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
+  rpc GetCategoryTree(GetCategoryTreeRequest) returns (GetCategoryTreeResponse);
+  rpc GetCategoryChildren(GetCategoryChildrenRequest) returns (GetCategoryChildrenResponse);
+
+  // Brand RPCs
+  rpc CreateBrand(CreateBrandRequest) returns (Brand);
+  rpc GetBrand(GetBrandRequest) returns (Brand);
+  rpc UpdateBrand(UpdateBrandRequest) returns (Brand);
+  rpc DeleteBrand(DeleteBrandRequest) returns (Empty);
+  rpc ListBrands(ListBrandsRequest) returns (ListBrandsResponse);
+  rpc SearchBrands(SearchBrandsRequest) returns (SearchBrandsResponse);
+
+  // Tag RPCs
+  rpc CreateTag(CreateTagRequest) returns (Tag);
+  rpc GetTag(GetTagRequest) returns (Tag);
+  rpc UpdateTag(UpdateTagRequest) returns (Tag);
+  rpc DeleteTag(DeleteTagRequest) returns (Empty);
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
+
+  // Product RPCs
+  rpc CreateProduct(CreateProductRequest) returns (Product);
+  rpc GetProduct(GetProductRequest) returns (Product);
+  rpc UpdateProduct(UpdateProductRequest) returns (Product);
+  rpc DeleteProduct(DeleteProductRequest) returns (Empty);
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+  rpc SearchProducts(SearchProductsRequest) returns (SearchProductsResponse);
+  rpc GetProductsByCategory(GetProductsByCategoryRequest) returns (GetProductsByCategoryResponse);
+  rpc GetProductsByTag(GetProductsByTagRequest) returns (GetProductsByTagResponse);
+}
+
+message GetProductsByTagRequest {
+  string tag_id = 1;
+  int32 limit = 2;
+}
+
+message GetProductsByTagResponse {
+  repeated Product products = 1;
+}
+
+// ==================== Common ====================
+
+message Empty {}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+}
+
+// ==================== Category ====================
+
+message Category {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string parent_id = 5;
+  int32 level = 6;
+  string path = 7;
+  bool is_active = 8;
+  repeated Category children = 9;
+  int32 product_count = 10;
+  Timestamp created_at = 11;
+  Timestamp updated_at = 12;
+}
+
+message CreateCategoryRequest {
+  string name = 1;
+  string slug = 2;
+  string description = 3;
+  string parent_id = 4;
+  bool is_active = 5;
+}
+
+message GetCategoryRequest {
+  string id = 1;
+}
+
+message UpdateCategoryRequest {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string parent_id = 5;
+  bool is_active = 6;
+}
+
+message DeleteCategoryRequest {
+  string id = 1;
+}
+
+message ListCategoriesRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  bool is_active = 3;
+  string parent_id = 4;
+}
+
+message ListCategoriesResponse {
+  repeated Category categories = 1;
+  Pagination pagination = 2;
+}
+
+message GetCategoryTreeRequest {}
+
+message GetCategoryTreeResponse {
+  repeated Category tree = 1;
+}
+
+message GetCategoryChildrenRequest {
+  string parent_id = 1;
+}
+
+message GetCategoryChildrenResponse {
+  repeated Category children = 1;
+}
+
+// ==================== Brand ====================
+
+message Brand {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string logo_url = 5;
+  bool is_active = 6;
+  int32 product_count = 7;
+  Timestamp created_at = 8;
+  Timestamp updated_at = 9;
+}
+
+message CreateBrandRequest {
+  string name = 1;
+  string slug = 2;
+  string description = 3;
+  string logo_url = 4;
+  bool is_active = 5;
+}
+
+message GetBrandRequest {
+  string id = 1;
+}
+
+message UpdateBrandRequest {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string logo_url = 5;
+  bool is_active = 6;
+}
+
+message DeleteBrandRequest {
+  string id = 1;
+}
+
+message ListBrandsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  bool is_active = 3;
+}
+
+message ListBrandsResponse {
+  repeated Brand brands = 1;
+  Pagination pagination = 2;
+}
+
+message SearchBrandsRequest {
+  string query = 1;
+  int32 limit = 2;
+}
+
+message SearchBrandsResponse {
+  repeated Brand brands = 1;
+}
+
+// ==================== Tag ====================
+
+message Tag {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  bool is_active = 5;
+  int32 product_count = 6;
+  Timestamp created_at = 7;
+  Timestamp updated_at = 8;
+}
+
+message CreateTagRequest {
+  string name = 1;
+  string slug = 2;
+  string description = 3;
+  bool is_active = 4;
+}
+
+message GetTagRequest {
+  string id = 1;
+}
+
+message UpdateTagRequest {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  bool is_active = 5;
+}
+
+message DeleteTagRequest {
+  string id = 1;
+}
+
+message ListTagsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  bool is_active = 3;
+}
+
+message ListTagsResponse {
+  repeated Tag tags = 1;
+  Pagination pagination = 2;
+}
+
+// ==================== Product ====================
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string sku = 5;
+  string barcode = 6;
+  string category_id = 7;
+  repeated string category_ids = 8;
+  string brand_id = 9;
+  string seller_id = 21;
+  string status = 10;
+  double price = 11;
+  double compare_at_price = 12;
+  double cost_price = 13;
+  int32 quantity = 14;
+  bool is_active = 15;
+  bool is_featured = 16;
+  repeated string image_urls = 17;
+  repeated string tag_ids = 18;
+  map<string, string> metadata = 19;
+  Timestamp created_at = 20;
+  Timestamp updated_at = 22;
+  Timestamp deleted_at = 23;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  string slug = 2;
+  string description = 3;
+  string sku = 4;
+  string barcode = 5;
+  string category_id = 6;
+  repeated string category_ids = 7;
+  string brand_id = 8;
+  string seller_id = 19;
+  string status = 9;
+  double price = 10;
+  double compare_at_price = 11;
+  double cost_price = 12;
+  int32 quantity = 13;
+  bool is_active = 14;
+  bool is_featured = 15;
+  repeated string image_urls = 16;
+  repeated string tag_ids = 17;
+  map<string, string> metadata = 18;
+}
+
+message GetProductRequest {
+  string id = 1;
+}
+
+message UpdateProductRequest {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string sku = 5;
+  string barcode = 6;
+  string category_id = 7;
+  repeated string category_ids = 8;
+  string brand_id = 9;
+  string seller_id = 20;
+  string status = 10;
+  double price = 11;
+  double compare_at_price = 12;
+  double cost_price = 13;
+  int32 quantity = 14;
+  bool is_active = 15;
+  bool is_featured = 16;
+  repeated string image_urls = 17;
+  repeated string tag_ids = 18;
+  map<string, string> metadata = 19;
+  Timestamp deleted_at = 21;
+}
+
+message DeleteProductRequest {
+  string id = 1;
+}
+
+message ListProductsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string category_id = 3;
+  string brand_id = 4;
+  string status = 5;
+  bool is_active = 6;
+  bool is_featured = 7;
+  double min_price = 8;
+  double max_price = 9;
+  string search = 10;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+  Pagination pagination = 2;
+}
+
+message SearchProductsRequest {
+  string query = 1;
+  string category_id = 2;
+  string brand_id = 3;
+  int32 limit = 4;
+}
+
+message SearchProductsResponse {
+  repeated Product products = 1;
+}
+
+message GetProductsByCategoryRequest {
+  string category_id = 1;
+  int32 limit = 2;
+}
+
+message GetProductsByCategoryResponse {
+  repeated Product products = 1;
+}

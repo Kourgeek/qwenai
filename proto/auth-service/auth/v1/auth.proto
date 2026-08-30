@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "proto/gen/auth/v1;authv1";
+
+import "google/protobuf/timestamp.proto";
+
+// AuthService provides authentication and authorization gRPC endpoints.
+service AuthService {
+  // Register creates a new user account.
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  // Login authenticates a user and returns JWT tokens.
+  rpc Login(LoginRequest) returns (LoginResponse);
+  // Refresh issues a new access token using a valid refresh token.
+  rpc Refresh(RefreshRequest) returns (RefreshResponse);
+  // Logout invalidates the refresh token (blacklisting).
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  // ForgotPassword sends a password reset link to the user's email.
+  rpc ForgotPassword(ForgotPasswordRequest) returns (ForgotPasswordResponse);
+}
+
+// RegisterRequest contains user registration data.
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string first_name = 3;
+  string last_name = 4;
+}
+
+// RegisterResponse contains the result of the registration.
+message RegisterResponse {
+  string id = 1;
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+  google.protobuf.Timestamp created_at = 5;
+  string access_token = 6;
+  string refresh_token = 7;
+}
+
+// LoginRequest contains user login credentials.
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+// LoginResponse contains JWT tokens and user info.
+message LoginResponse {
+  string user_id = 1;
+  string email = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+}
+
+// RefreshRequest contains the refresh token.
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+// RefreshResponse contains a new access token.
+message RefreshResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp access_expires_at = 3;
+  google.protobuf.Timestamp refresh_expires_at = 4;
+}
+
+// LogoutRequest contains the refresh token to invalidate.
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+// LogoutResponse confirms token invalidation.
+message LogoutResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ForgotPasswordRequest contains the user's email.
+message ForgotPasswordRequest {
+  string email = 1;
+}
+
+// ForgotPasswordResponse confirms the reset email was sent.
+message ForgotPasswordResponse {
+  bool success = 1;
+  string message = 2;
+}

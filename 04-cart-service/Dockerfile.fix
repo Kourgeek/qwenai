@@ -1,0 +1,5 @@
+FROM migration_plan-cart-service:latest
+COPY 04-cart-service/src/main.py /app/src/main.py
+COPY 04-cart-service/src/grpc_client/__init__.py /app/src/grpc_client/__init__.py
+COPY 04-cart-service/src/grpc_client/catalog_client.py /app/src/grpc_client/catalog_client.py
+COPY 04-cart-service/src/grpc_server/__init__.py /app/src/grpc_server/__init__.py

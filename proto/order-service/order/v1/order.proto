@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package order.v1;
+
+option go_package = "order-service/proto/gen/order/v1;orderv1";
+
+// OrderService provides order management operations including creation,
+// status tracking, cancellation, and order history.
+service OrderService {
+  // CreateOrder creates a new order from a cart.
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+
+  // GetOrder retrieves order details by ID.
+  rpc GetOrder(GetOrderRequest) returns (Order);
+
+  // GetUserOrders returns paginated list of orders for a user.
+  rpc GetUserOrders(GetUserOrdersRequest) returns (GetUserOrdersResponse);
+
+  // CancelOrder cancels a pending or processing order.
+  rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+
+  // UpdateOrderStatus updates the status of an order (used internally/by admin).
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (Order);
+}
+
+// ==================== Order ====================
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  string cart_id = 3;
+  string status = 4;
+  double total_amount = 5;
+  string currency = 6;
+  repeated OrderItem items = 7;
+  ShippingAddress shipping_address = 8;
+  string payment_method = 9;
+  string tracking_number = 10;
+  string cancelled_by = 11;
+  string cancellation_reason = 12;
+  int64 created_at = 13;
+  int64 updated_at = 14;
+  int64 completed_at = 15;
+  int64 cancelled_at = 16;
+}
+
+message OrderItem {
+  string id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  string sku = 4;
+  int32 quantity = 5;
+  double unit_price = 6;
+  double total_price = 7;
+  string image_url = 8;
+}
+
+message ShippingAddress {
+  string full_name = 1;
+  string line1 = 2;
+  string line2 = 3;
+  string city = 4;
+  string state = 5;
+  string postal_code = 6;
+  string country = 7;
+  string phone = 8;
+}
+
+// ==================== Requests / Responses ====================
+
+message CreateOrderRequest {
+  string user_id = 1;
+  string cart_id = 2;
+  ShippingAddress shipping_address = 3;
+  string payment_method = 4;
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+message GetUserOrdersRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string status = 4;
+}
+
+message GetUserOrdersResponse {
+  repeated Order orders = 1;
+  Pagination pagination = 2;
+}
+
+message CancelOrderRequest {
+  string order_id = 1;
+  string user_id = 2;
+  string reason = 3;
+}
+
+message CancelOrderResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UpdateOrderStatusRequest {
+  string order_id = 1;
+  string status = 2;
+}
+
+// ==================== Common ====================
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+}
+
+message Empty {}
